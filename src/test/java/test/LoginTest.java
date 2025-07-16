@@ -8,10 +8,8 @@ public class LoginTest extends BaseTest {
 
 	@Test
 	public void testLoginFuncitonality() {
-		LoginPage login = new LoginPage(driver);
-		login.enterusername("Abhimanyu");
-		login.enterpassword("pass123");
-		login.clickLogin();
+		LoginPage loginPage = new LoginPage(driver);
+		loginPage.login("Abhimanyu","password123");
 	}
 
 }
