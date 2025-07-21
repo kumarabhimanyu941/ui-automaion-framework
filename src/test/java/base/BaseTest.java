@@ -1,9 +1,12 @@
 package base;
 
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
+
 import org.testng.annotations.*;
-import io.github.bonigarcia.wdm.WebDriverManager;
+
+import factory.DriverFactory;
+
+import utils.ConfigReader;
 
 public abstract class BaseTest {
 
@@ -11,17 +14,13 @@ public abstract class BaseTest {
 
 	@BeforeMethod
 	public void setUp() {
-		WebDriverManager.chromedriver().setup();
-		driver = new ChromeDriver();
-		driver.manage().window().maximize();
-		driver.get("https://amazon.com/login");
+		String browser = ConfigReader.get("browser");
+		driver = DriverFactory.init_driver(browser);
+		driver.get(ConfigReader.get("baseUrl"));
 	}
 
 	@AfterMethod
 	public void tearDown() {
-		if (driver != null) {
-			driver.quit();
-		}
+		DriverFactory.quitDriver();
 	}
-
 }
