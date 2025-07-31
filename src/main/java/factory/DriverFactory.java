@@ -1,51 +1,63 @@
 
 package factory;
 
-import java.time.Duration;
-
-import org.bouncycastle.crypto.RuntimeCryptoException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import utils.ConfigReader;
+import java.time.Duration;
+import java.util.Locale;
 
 public class DriverFactory {
 
+	// 1)Private static instance of the class
+	private static volatile DriverFactory instance;
+	private static BrowserDriverFactory browserfactory;
+
 	private static ThreadLocal<WebDriver> tldriver = new ThreadLocal();
 
-	public static WebDriver init_driver(String browser) {
+	// 2)private constructor of the class
 
-		if (browser.equalsIgnoreCase("chrome")) {
-			ChromeOptions options = new ChromeOptions();
-			Boolean isHeadless = Boolean.parseBoolean(ConfigReader.get("headless"));
+	private DriverFactory() {
+	};
 
-			if (isHeadless) {
-				options.addArguments("--headless=new");
+	// 3)Public getter method that will act as global access point to get the
+	// instance of the class
+
+	public static DriverFactory getInstance() {
+		if (instance == null) {
+			synchronized (DriverFactory.class) {
+				if (instance == null) {
+					instance = new DriverFactory();
+				}
 			}
-			tldriver.set(new ChromeDriver(options));
+		}
+		return instance;
+	}
+
+	public static ThreadLocal<WebDriver> init_driver(String browser) {
+
+		switch (browser.toLowerCase(Locale.ROOT)) {
+
+		case "chrome":
+			browserfactory = new ChromeDriverManager();
+			break;
+		case "firefox":
+			browserfactory = new FirefoxDriverManager();
+		default:
+			throw new IllegalArgumentException("Invalid browser name.");
+
 		}
 
-		else if (browser.equalsIgnoreCase("firefox")) {
-			Boolean isHeadless = Boolean.parseBoolean(ConfigReader.get(browser));
-			FirefoxOptions options = new FirefoxOptions();
-
-			if (isHeadless) {
-				options.addArguments("--headless");
-			}
-			tldriver.set(new FirefoxDriver(options));
-		}
-
-		else {
-			throw new RuntimeException("Unsupported browser :" + browser);
-		}
-
+		tldriver.set(browserfactory.createdriver());
 		getDriver().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-		getDriver().manage().timeouts().pageLoadTimeout(Duration.ofSeconds(10));
-
-		return getDriver();
+		getDriver().manage().window().maximize();
+		getDriver().get(ConfigReader.get("url"));
+		return tldriver;
 
 	}
 
@@ -53,10 +65,9 @@ public class DriverFactory {
 		return tldriver.get();
 	}
 
-	public static void quitDriver() {
+	public static void removeDriver() {
 		getDriver().quit();
 		tldriver.remove();
-
 	}
 
 }

@@ -13,6 +13,7 @@ public class ConfigReader {
 
 		try {
 			FileInputStream fis = new FileInputStream("src/test/resources/config.properties");
+			prop.load(fis);
 		} catch (IOException e) {
 			System.out.println("Error loading the config file");
 			e.printStackTrace();
